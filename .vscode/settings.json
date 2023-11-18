@@ -4,6 +4,7 @@
         "pid.h": "c",
         "stdio.h": "c",
         "com.h": "c",
-        "stm32f4xx_hal.h": "c"
+        "stm32f4xx_hal.h": "c",
+        "can.h": "c"
     }
 }

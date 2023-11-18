@@ -69,6 +69,7 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
+
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -105,7 +106,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  float position = 0.0;
   printf("--------------init--------------\n");
+  Odrv_set_motor_ControlMode(&hcan1, 0x00, 1, 1);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -114,7 +117,11 @@ int main(void)
   printf("Encoder:%d\n", motor[0].encoder);
   HAL_Delay(1);
 
-  Odrv_set_motor_torque(&hcan1, 0x00, 1.5);
+  Odrv_set_motor_torque(&hcan1, 0x00, 7);
+  //Odrv_set_motor_position(&hcan1, 0x00, 0.2, 2000, 5);
+  Odrv_set_motor_ControlMode(&hcan1, 0x00, 1, 1);
+  HAL_Delay(1000);
+
 
   }
   /* USER CODE END 3 */

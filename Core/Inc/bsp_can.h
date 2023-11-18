@@ -67,6 +67,7 @@ typedef struct
 extern moto_measure_t  moto_chassis[];
 extern Odrive_motor_measure motor[];
 
+
 void my_can_filter_init(CAN_HandleTypeDef* hcan);
 void my_can_filter_init_recv_all(CAN_HandleTypeDef* _hcan);
 void can_filter_recv_special(CAN_HandleTypeDef* hcan, uint8_t filter_number, uint16_t filtered_id);
@@ -76,5 +77,8 @@ void set_moto_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan);
 uint8_t Odrv_CAN_Send_Msg(CAN_HandleTypeDef *hcan,uint16_t StdID,uint8_t *msg,uint8_t len,uint8_t Frame_type);
 void Odrv_set_motor_torque(CAN_HandleTypeDef* hcan, int axis_id, float torque_set);
+void Odrv_set_motor_position(CAN_HandleTypeDef* hcan, int axis_id, float position_set, int16_t vel_lim, int16_t tor_lim);
+void Odrv_set_motor_ControlMode(CAN_HandleTypeDef* hcan, int axis_id, int32_t control_mode, int32_t input_mode);
+
 
 #endif

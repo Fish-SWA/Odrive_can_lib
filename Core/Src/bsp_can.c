@@ -140,3 +140,37 @@ void Odrv_set_motor_torque(CAN_HandleTypeDef* hcan, int axis_id, float torque_se
 	//printf("%d, %d, %d, %d\n", can_msg[0], can_msg[1], can_msg[2], can_msg[3]);
 	Odrv_CAN_Send_Msg(&hcan, axis_id<<5 | 0x00E, can_msg, 8, CAN_RTR_DATA);
 }
+
+/*设置电机位置*/
+void Odrv_set_motor_position(CAN_HandleTypeDef* hcan, int axis_id, float position_set, int16_t vel_lim, int16_t tor_lim)
+{
+	uint8_t can_msg[8] = {0};
+	unsigned int* float_bit_data = (unsigned int*)(&position_set);
+	can_msg[3] = (*float_bit_data>>24)&0xff;
+	can_msg[2] = (*float_bit_data>>16)&0xff;
+	can_msg[1] = (*float_bit_data>>8)&0xff;
+	can_msg[0] = (*float_bit_data)&0xff;
+	can_msg[5] = (vel_lim<<8)&0xff;
+	can_msg[6] = (vel_lim)&0xff;
+	can_msg[8] = (tor_lim<<8)&0xff;
+	can_msg[7] = (tor_lim)&0xff;
+	//printf("%d, %d, %d, %d\n", can_msg[0], can_msg[1], can_msg[2], can_msg[3]);
+	Odrv_CAN_Send_Msg(&hcan, axis_id<<5 | 0x00C, can_msg, 8, CAN_RTR_DATA);
+}
+
+/*设置控制模式*/
+void Odrv_set_motor_ControlMode(CAN_HandleTypeDef* hcan, int axis_id, int32_t control_mode, int32_t input_mode)
+{
+	uint8_t can_msg[8] = {0};
+
+	can_msg[3] = (control_mode<<24)&0xff;
+	can_msg[2] = (control_mode<<16)&0xff;
+	can_msg[1] = (control_mode<<8)&0xff;
+	can_msg[0] = (control_mode)&0xff;
+	can_msg[7] = (input_mode<<24)&0xff;
+	can_msg[6] = (input_mode<<16)&0xff;
+	can_msg[5] = (input_mode<<8)&0xff;
+	can_msg[4] = (input_mode)&0xff;
+	//printf("%d, %d, %d, %d\n", can_msg[0], can_msg[1], can_msg[2], can_msg[3]);
+	Odrv_CAN_Send_Msg(&hcan, axis_id<<5 | 0x00B, can_msg, 8, CAN_RTR_DATA);
+}
