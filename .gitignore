@@ -1,0 +1,15 @@
+*.o
+*.hex
+*.d
+*.crf
+*.axf
+*.map
+*.htm
+*.lnp
+*.sct
+*.dep
+*.lst
+*.scvd
+*.iex
+*.22394
+.cache/

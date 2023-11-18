@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "bsp_can.h": "c",
+        "pid.h": "c",
+        "stdio.h": "c",
+        "com.h": "c",
+        "stm32f4xx_hal.h": "c"
+    }
+}
