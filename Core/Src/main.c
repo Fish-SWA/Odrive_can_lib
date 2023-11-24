@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "com.h"
+#include <math.h>
 
 #define printf(...) cprintf(&huart1,__VA_ARGS__)
 
@@ -106,22 +107,30 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  float position = 0.0;
+  float x = 3.14*0.5;
   printf("--------------init--------------\n");
-  Odrv_set_motor_ControlMode(&hcan1, 0x00, 1, 1);
+  //Odrv_set_motor_ControlMode(&hcan1, 0x00, 1, 1);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  printf("Encoder:%d\n", motor[0].encoder);
+
+  //输出编码器值
+  printf("%d,%d,%d,\n", motor[0].encoder, motor[1].encoder, motor[2].encoder);
+  
+  //设置点击扭矩（正弦波）
+  for(int i=0; i<3; i++)
+  {
+    motor[i].traget_torque = sin(x)*7;
+  }
+  x += 0.01;
   HAL_Delay(1);
 
-  Odrv_set_motor_torque(&hcan1, 0x00, 7);
+  //Odrv_set_axis_state(&hcan1, 1, 8);
+  //Odrv_set_motor_torque(&hcan1, 0x00, 0.8);
   //Odrv_set_motor_position(&hcan1, 0x00, 0.2, 2000, 5);
-  Odrv_set_motor_ControlMode(&hcan1, 0x00, 1, 1);
-  HAL_Delay(1000);
-
+  
 
   }
   /* USER CODE END 3 */

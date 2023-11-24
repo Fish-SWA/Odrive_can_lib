@@ -30,6 +30,7 @@
 
 
 Odrive_motor_measure motor[3] = {0};
+int can_message_count = 0;
 
 
 /*******************************************************************************************
@@ -90,14 +91,50 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 	HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &Rx1Message, Data);
 
 	//输出CAN接收到的所有信息
-	// printf("ID:%x, \t\tData:%x, %x, %x, %x, %x, %x, %x, %x\n", Rx1Message.StdId, Data[0], 
+	// if(Rx1Message.StdId == (0x01<<5 | HEARTBEAT_MESSAGE_CMDID))
+	// {
+	// printf("ID:%x,count=%d \t\tData:%x, %x, %x, %x, %x, %x, %x, %x\n", Rx1Message.StdId, can_message_count, Data[0], 
 	// 				Data[1], Data[2], Data[3], Data[4], Data[5], Data[6], Data[7]);
+	// can_message_count++;
+	// }
 
-	//处理收到的编码器数据
-	if(Rx1Message.StdId == (0x00<<5 | 0x0A)) motor[0].encoder = Data[5]<<8 | Data[4];
-	if(Rx1Message.StdId == (0x01<<5 | 0x0A)) motor[1].encoder = Data[5]<<8 | Data[4];
-	if(Rx1Message.StdId == (0x02<<5 | 0x0A)) motor[2].encoder = Data[5]<<8 | Data[4];
 
+	/*接收CAN发送的数据 & 向电机发送目标扭矩*/
+	switch (Rx1Message.StdId&0x1F)
+	{
+	case GET_ENCODER_COUNT_CMDID:
+		motor[Rx1Message.StdId>>5].encoder = Data[5]<<8 | Data[4];
+		Odrv_set_motor_torque(&hcan1, Rx1Message.StdId>>5, motor[Rx1Message.StdId>>5].traget_torque);
+		break;
+	case HEARTBEAT_MESSAGE_CMDID:
+		motor[Rx1Message.StdId>>5].axis_err = Data[3]<<24 | Data[2]<<16 | Data[1]<<8 | Data[0];
+		motor[Rx1Message.StdId>>5].axis_current_stage = Data[4];
+		motor[Rx1Message.StdId>>5].motor_err_flag = Data[5];
+		motor[Rx1Message.StdId>>5].encoder_err_flag = Data[6];
+
+		/*在编码器错误的情况下尝试重新进闭环*/
+		for(int i=0; i<3; i++)
+		{
+			//等待odrive启动
+			if((HAL_GetTick() <= 5000)) break;
+
+			if((motor[i].encoder_err_flag == 1))
+			{
+			//清除错误
+			printf("encoder failed, id=%d!\n", i);
+			Odrv_Clear_err(&hcan1, i);
+			motor[i].state_resrt_count = 0;
+			}
+			else if((motor[i].axis_current_stage != 8) && motor[i].state_resrt_count <= 100)
+			{
+			//尝试重新进闭环
+			printf("stage_err, id=%d, state=%d!\n", i, motor[i].axis_current_stage);
+			Odrv_set_axis_state(&hcan1, i, 8);
+			motor[i].state_resrt_count++;
+			}
+		}
+		break;
+	}
 	/*#### add enable can it again to solve can receive only one ID problem!!!####**/
 	__HAL_CAN_ENABLE_IT(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 }
@@ -121,6 +158,8 @@ uint8_t Odrv_CAN_Send_Msg(CAN_HandleTypeDef *hcan,uint16_t StdID,uint8_t *msg,ui
             send_buf[index] = msg[index];
     }
     /*****发送消息*****/
+	// printf("SENT ID:%x, \t\tData:%x, %x, %x, %x, %x, %x, %x, %x\n", TxHeader.StdId, send_buf[0],
+	// 		send_buf[1], send_buf[2], send_buf[3], send_buf[4], send_buf[5], send_buf[6], send_buf[7]);
     if(HAL_CAN_AddTxMessage(&hcan1, &TxHeader, send_buf, &TxMailbox) != HAL_OK)//发送
     {
         return 1;
@@ -173,4 +212,23 @@ void Odrv_set_motor_ControlMode(CAN_HandleTypeDef* hcan, int axis_id, int32_t co
 	can_msg[4] = (input_mode)&0xff;
 	//printf("%d, %d, %d, %d\n", can_msg[0], can_msg[1], can_msg[2], can_msg[3]);
 	Odrv_CAN_Send_Msg(&hcan, axis_id<<5 | 0x00B, can_msg, 8, CAN_RTR_DATA);
+}
+
+/*清除错误*/
+void Odrv_Clear_err(CAN_HandleTypeDef* hcan, int axis_id)
+{
+	uint8_t can_msg[8] = {0};
+	Odrv_CAN_Send_Msg(&hcan, axis_id<<5 | 0x018, can_msg, 8, CAN_RTR_REMOTE);
+}
+
+/*设置控制状态*/
+void Odrv_set_axis_state(CAN_HandleTypeDef* hcan, int axis_id, int32_t axis_state)
+{
+	uint8_t can_msg[8] = {0};
+
+	can_msg[3] = (axis_state<<24)&0xff;
+	can_msg[2] = (axis_state<<16)&0xff;
+	can_msg[1] = (axis_state<<8)&0xff;
+	can_msg[0] = (axis_state)&0xff;
+	Odrv_CAN_Send_Msg(&hcan, axis_id<<5 | 0x007, can_msg, 8, CAN_RTR_DATA);
 }

@@ -32,7 +32,9 @@
 #include "mytype.h"
 #include "can.h"
 
-
+#define HEARTBEAT_MESSAGE_CMDID 0x001 
+#define GET_ENCODER_COUNT_CMDID 0X00A
+#define GET_VBUS_VOLTAGE_CMDID  0x017
 
 
 
@@ -59,7 +61,15 @@ typedef struct
 {
 	int16_t encoder;
 	int16_t speed;
-	int16_t real_current;
+	float real_current;
+	float vbus_vlotage;
+	float traget_torque;
+	/*×´Ì¬²âÊÔ*/
+	int32_t axis_err;
+	int8_t axis_current_stage;
+	int8_t motor_err_flag;
+	int8_t encoder_err_flag;
+	int8_t state_resrt_count;
 } Odrive_motor_measure;
 
 
@@ -79,6 +89,7 @@ uint8_t Odrv_CAN_Send_Msg(CAN_HandleTypeDef *hcan,uint16_t StdID,uint8_t *msg,ui
 void Odrv_set_motor_torque(CAN_HandleTypeDef* hcan, int axis_id, float torque_set);
 void Odrv_set_motor_position(CAN_HandleTypeDef* hcan, int axis_id, float position_set, int16_t vel_lim, int16_t tor_lim);
 void Odrv_set_motor_ControlMode(CAN_HandleTypeDef* hcan, int axis_id, int32_t control_mode, int32_t input_mode);
-
+void Odrv_Clear_err(CAN_HandleTypeDef* hcan, int axis_id);
+void Odrv_set_axis_state(CAN_HandleTypeDef* hcan, int axis_id, int32_t axis_state);
 
 #endif
