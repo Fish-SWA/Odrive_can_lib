@@ -115,9 +115,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 		/*在编码器错误的情况下尝试重新进闭环*/
 		for(int i=0; i<3; i++)
 		{
-			//等待odrive启动
-			if((HAL_GetTick() <= 5000)) break;
-
 			if((motor[i].encoder_err_flag == 1))
 			{
 			//清除错误
@@ -125,7 +122,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 			Odrv_Clear_err(&hcan1, i);
 			motor[i].state_resrt_count = 0;
 			}
-			else if((motor[i].axis_current_stage != 8) && motor[i].state_resrt_count <= 100)
+			else if((motor[i].axis_current_stage != 8) && (motor[i].axis_current_stage != 0) && motor[i].state_resrt_count <= 100)
 			{
 			//尝试重新进闭环
 			printf("stage_err, id=%d, state=%d!\n", i, motor[i].axis_current_stage);
